@@ -14,8 +14,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Local Audio Player',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      debugShowCheckedModeBanner: false,
+      title: 'Neumorphic Audio Player',
+      theme: ThemeData(
+        fontFamily: 'Arial',
+        scaffoldBackgroundColor: Color(0xFFEFF3F6),
+      ),
       home: AudioPlayerScreen(),
     );
   }
@@ -113,57 +117,121 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
     super.dispose();
   }
 
-  Widget _buildAudioList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: _audioFiles.length,
-      itemBuilder: (context, index) {
-        final file = _audioFiles[index];
-        return ListTile(
-          title: Text(p.basename(file.path)),
-          trailing:
-              _currentFile?.path == file.path ? Icon(Icons.play_arrow) : null,
-          onTap: () => _playFile(file),
-        );
-      },
+  Widget _neumorphicButton(IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Color(0xFFEFF3F6),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              offset: Offset(-6, -6),
+              blurRadius: 10,
+            ),
+            BoxShadow(
+              color: Colors.grey.shade500,
+              offset: Offset(6, 6),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 28),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Local Audio Player")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ElevatedButton.icon(
-              icon: Icon(Icons.upload_file),
-              label: Text("Pick and Save Audio"),
-              onPressed: _pickAndSaveFile,
-            ),
-            SizedBox(height: 20),
-            if (_currentFile != null)
-              Column(
-                children: [
-                  Text('Now Playing: ${p.basename(_currentFile!.path)}'),
-                  ProgressBar(
-                    progress: _position,
-                    total: _duration,
-                    onSeek: _seek,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage(
+                      "assets/album_art.jpg",
+                    ), // ganti sesuai asset kamu
+                    fit: BoxFit.cover,
                   ),
-                  IconButton(
-                    icon: Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 40,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade400,
+                      blurRadius: 15,
+                      offset: Offset(0, 10),
                     ),
-                    onPressed: _playPause,
+                  ],
+                ),
+              ),
+              SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _neumorphicButton(Icons.skip_previous, () {}),
+                  SizedBox(width: 30),
+                  _neumorphicButton(
+                    _isPlaying ? Icons.pause : Icons.play_arrow,
+                    _playPause,
                   ),
+                  SizedBox(width: 30),
+                  _neumorphicButton(Icons.skip_next, () {}),
                 ],
               ),
-            SizedBox(height: 20),
-            Expanded(child: _buildAudioList()),
-          ],
+              SizedBox(height: 20),
+              ProgressBar(
+                progress: _position,
+                total: _duration,
+                onSeek: _seek,
+                timeLabelTextStyle: TextStyle(color: Colors.grey.shade700),
+                thumbColor: Colors.blueGrey,
+                baseBarColor: Colors.grey.shade300,
+                progressBarColor: Colors.blueAccent,
+              ),
+              SizedBox(height: 20),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _audioFiles.length,
+                  itemBuilder: (context, index) {
+                    final file = _audioFiles[index];
+                    final fileName = p.basenameWithoutExtension(file.path);
+
+                    return ListTile(
+                      leading: Image.asset(
+                        'assets/thumb_${(index % 5) + 1}.jpg', // thumb_1.jpg - thumb_5.jpg
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                      ),
+                      title: Text(fileName),
+                      onTap: () => _playFile(file),
+                    );
+                  },
+                ),
+              ),
+
+              Text("Volume"),
+              Slider(
+                min: 0,
+                max: 1,
+                value: _audioPlayer.volume,
+                onChanged: (value) => _audioPlayer.setVolume(value),
+              ),
+              ElevatedButton.icon(
+                icon: Icon(Icons.upload_file),
+                label: Text("Pick and Save Audio"),
+                onPressed: _pickAndSaveFile,
+              ),
+            ],
+          ),
         ),
       ),
     );
